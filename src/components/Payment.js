@@ -8,11 +8,12 @@ import CurrencyFormat from "react-currency-format";
 import { getBasketTotal } from "./Reducer";
 import axios from "../axios";
 import { db } from "./firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
 
 const Payment = () => {
   const [{ basket, user }, dispatch] = useStateValue();
-  console.log("user:", user);
-  console.log("basket:", basket);
+  // console.log("user:", user);
+  // console.log("basket:", basket);
 
   const stripe = useStripe();
   const elements = useElements();
@@ -45,24 +46,33 @@ const Payment = () => {
     event.preventDefault();
     setProcessing(true);
 
+    const myCollection = collection(db, "users");
+
     const payLoad = await stripe
       .confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardElement),
         },
       })
-      .then(({ paymentIntent }) => {
+      .then(async ({ paymentIntent }) => {
         //paymentIntent - payment confirmation
 
-        db.collection("users")
-          .doc(user?.id)
-          .collection("orders")
-          .doc(paymentIntent.id)
-          .set({
+        const orderDocRef = doc(
+          myCollection,
+          user?.uid,
+          "orders",
+          paymentIntent.id
+        );
+
+        try {
+          await setDoc(orderDocRef, {
             basket: basket,
             amount: paymentIntent.amount,
             created: paymentIntent.created,
           });
+        } catch (error) {
+          console.error("Error adding order document:", error);
+        }
 
         setSucceeded(true);
         setError(null);
@@ -74,8 +84,6 @@ const Payment = () => {
 
         navigate("/orders");
       });
-
-    // const payLoad = await stripe
   };
   const handleChange = (e) => {
     //listen for changes in th Cardelement
