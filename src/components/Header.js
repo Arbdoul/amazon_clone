@@ -38,10 +38,12 @@ const Header = () => {
             </span>
           </div>
         </Link>
-        <div className="header_option">
-          <span className="header_optionOne">return</span>
-          <span className="header_optionTwo">orders</span>
-        </div>
+        <Link to="/orders">
+          <div className="header_option">
+            <span className="header_optionOne">return</span>
+            <span className="header_optionTwo">orders</span>
+          </div>
+        </Link>
 
         <div className="header_option">
           <span className="header_optionOne">Your</span>
